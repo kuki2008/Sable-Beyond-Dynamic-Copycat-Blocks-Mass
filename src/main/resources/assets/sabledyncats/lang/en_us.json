@@ -1,0 +1,13 @@
+{
+  "itemGroup.sabledyncats": "Example Mod Tab",
+  "block.sabledyncats.example_block": "Example Block",
+  "item.sabledyncats.example_item": "Example Item",
+
+  "sabledyncats.configuration.title": "Sable DynoCats Configs",
+  "sabledyncats.configuration.section.sabledyncats.common.toml": "Sable DynoCats Configs",
+  "sabledyncats.configuration.section.sabledyncats.common.toml.title": "Sable DynoCats Configs",
+  "sabledyncats.configuration.items": "Item List",
+  "sabledyncats.configuration.logDirtBlock": "Log Dirt Block",
+  "sabledyncats.configuration.magicNumberIntroduction": "Magic Number Text",
+  "sabledyncats.configuration.magicNumber": "Magic Number"
+}

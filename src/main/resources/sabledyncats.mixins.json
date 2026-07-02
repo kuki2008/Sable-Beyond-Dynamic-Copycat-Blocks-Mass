@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "com.kuki.sabledyncats.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "IMultiStateCopycatBlockEntityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}
