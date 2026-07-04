@@ -3,6 +3,7 @@
   "package": "com.kuki.sabledyncats.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "ICopycatBlockEntityMixin",
     "IMultiStateCopycatBlockEntityMixin"
   ],
   "injectors": {
