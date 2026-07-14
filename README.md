@@ -60,6 +60,6 @@ Example:
 ```
 
 # Downloads
-## [Curseforge](https://www.curseforge.com/minecraft/mc-mods/sable-beyond-dynamic-copycats-addon)
-## [Modrinth](https://modrinth.com/mod/sable-beyond-dynamic-copycats-addon)
-## [Releases](https://github.com/kuki2008/Sable-Beyond-Dynamic-Copycat-Blocks-Mass/releases)
+### [Curseforge](https://www.curseforge.com/minecraft/mc-mods/sable-beyond-dynamic-copycats-addon)
+### [Modrinth](https://modrinth.com/mod/sable-beyond-dynamic-copycats-addon)
+### [Releases](https://github.com/kuki2008/Sable-Beyond-Dynamic-Copycat-Blocks-Mass/releases)
