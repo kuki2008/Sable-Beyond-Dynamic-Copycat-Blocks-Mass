@@ -46,7 +46,7 @@ authors="Kuki2008"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-Small patch to dynamically change copycat's mass depending on inserted block
+Adds mass support for Copycats+ blocks in Sable, including multi-material copycats with configurable mass calculation.
 '''
 
 # The [[mixin]] block allows you to declare your mixin config to FML so that it gets loaded.
