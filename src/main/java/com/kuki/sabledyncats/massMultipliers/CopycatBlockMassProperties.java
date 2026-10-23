@@ -38,6 +38,7 @@ public class CopycatBlockMassProperties
             BlockState state,
             BlockPos pos
     ) {
-        return copiedState.getBlock() == BuiltInRegistries.BLOCK.get(COPYCAT_BASE_ID);
+        return copiedState == null || copiedState.isAir()
+                || copiedState.getBlock() == BuiltInRegistries.BLOCK.get(COPYCAT_BASE_ID);
     }
 }
