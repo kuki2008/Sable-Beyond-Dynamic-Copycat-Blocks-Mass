@@ -72,10 +72,7 @@ public class BlockMassPropertiesHandler {
                     } else {
                         PROPERTIES.put(block, VariantBlockMassProperties.fromJson(block, el.getAsJsonObject()));
                     }
-                    SableDynoCats.LOGGER.info(
-                            "Registered mass provider for {}",
-                            BuiltInRegistries.BLOCK.getKey(block)
-                    );
+
                 } catch (Exception e) {
                     SableDynoCats.LOGGER.error(
                             "Exception loading mass properties for {}",
@@ -109,21 +106,9 @@ public class BlockMassPropertiesHandler {
     public static BlockMassPropertiesProvider getProperties(Block block) {
         BlockMassPropertiesProvider provider = PROPERTIES.get(block);
 
-        if (provider == null) {
-            SableDynoCats.LOGGER.warn(
-                    "No BlockMassPropertiesProvider for {}. Using FALLBACK_PROVIDER.",
-                    BuiltInRegistries.BLOCK.getKey(block)
-            );
-            return FALLBACK_PROVIDER;
-        }
-
-        SableDynoCats.LOGGER.info(
-                "Using {} for {}",
-                provider.getClass().getSimpleName(),
-                BuiltInRegistries.BLOCK.getKey(block)
-        );
-
-        return provider;
+        // Missing providers are expected for ordinary material blocks.
+        // Never log on this hot path (potentially thousands of mass updates).
+        return provider != null ? provider : FALLBACK_PROVIDER;
     }
 
     public static <T extends BlockMassPropertiesSerializer<?>> T registerCustomSerializer(Block block, T ser) {

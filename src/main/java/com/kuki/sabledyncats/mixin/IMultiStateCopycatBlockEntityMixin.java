@@ -1,7 +1,7 @@
 package com.kuki.sabledyncats.mixin;
 
 import com.copycatsplus.copycats.foundation.copycat.multistate.IMultiStateCopycatBlockEntity;
-import com.kuki.sabledyncats.CoolAssMethods.CopycatMassUpdater;
+import com.kuki.sabledyncats.CoolAssMethods.CopycatMassQueue;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,6 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public interface IMultiStateCopycatBlockEntityMixin {
     @Inject(method = "setMaterial", at = @At("TAIL"))
     private void sable$onMaterialChanged(String property, BlockState material, CallbackInfo ci) {
-        CopycatMassUpdater.update((BlockEntity)(Object)this, material);
+        CopycatMassQueue.schedule((BlockEntity)(Object)this);
     }
 }

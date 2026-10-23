@@ -32,11 +32,6 @@ public abstract class AbstractMimiBlockMassProperties implements BlockMassProper
                 unitsByState.getOrDefault(state, defaultUnit);
 
         BlockState copiedState = getCopiedState(level, state, pos);
-        SableDynoCats.LOGGER.info(
-                "AbstractMimicking called recurse={} state={}",
-                recurse,
-                state
-        );
 
         if (!recurse || isEmptyState(level, copiedState, state, pos))
             return properties.massMultiplier();

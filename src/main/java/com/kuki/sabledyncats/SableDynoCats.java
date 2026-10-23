@@ -2,6 +2,11 @@ package com.kuki.sabledyncats;
 
 import com.kuki.sabledyncats.massMultipliers.BlockMassPropertiesHandler;
 import com.kuki.sabledyncats.massMultipliers.CopycatsDefinitions;
+import com.kuki.sabledyncats.CoolAssMethods.CopycatMassQueue;
+import com.kuki.sabledyncats.compat.PhotomancyMassCompat;
+import com.kuki.sabledyncats.commands.MassRecalculateCommand;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import org.slf4j.Logger;
@@ -34,8 +39,8 @@ public class SableDynoCats {
         );
 
         NeoForge.EVENT_BUS.register(this);
-
-        NeoForge.EVENT_BUS.register(this);
+        // Register the event-driven mass queue exactly once.
+        NeoForge.EVENT_BUS.register(CopycatMassQueue.class);
 
         modEventBus.register(Config.class);
 
@@ -47,9 +52,21 @@ public class SableDynoCats {
 
         CopycatsDefinitions.init();
 
+        // Sable Photomancy is optional. Register after mod setup on main thread.
+        event.enqueueWork(() -> {
+            if (ModList.get().isLoaded("sable_schematic_api")) {
+                PhotomancyMassCompat.register();
+            }
+        });
+
         LOGGER.info("Copycats mass compatibility initialized");
     }
 
+
+    @SubscribeEvent
+    public void onRegisterCommands(RegisterCommandsEvent event) {
+        MassRecalculateCommand.register(event);
+    }
 
     @SubscribeEvent
     public void onReload(AddReloadListenerEvent event) {

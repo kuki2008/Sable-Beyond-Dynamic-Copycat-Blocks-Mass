@@ -183,6 +183,15 @@ configurations {
 }
 
 dependencies {
+    // Compile-only optional Sable Photomancy 1.0.1 API; NOT bundled in DynoCats.
+    def photomancyCompileJar = file('libs/sable-photomancy-1.0.1.jar')
+    if (!photomancyCompileJar.exists()) {
+        photomancyCompileJar = file('run/mods/sable-photomancy-1.0.1.jar')
+    }
+    if (photomancyCompileJar.exists()) {
+        compileOnly files(photomancyCompileJar)
+    }
+
     implementation("foundry.veil:veil-neoforge-${minecraft_version}:${veil_version}")
     api("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}") { transitive = false }
     api("dev.ryanhcode.sable-companion:sable-companion-common-${minecraft_version}:${sable_companion_version}")
