@@ -20,10 +20,8 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.common.NeoForge;
 
-// Me VS hydrogen bomb let's go!
 @Mod(SableDynoCats.MODID)
 public class SableDynoCats {
-    // Hi, my name is Derek. Welcome to PizzaHut, let me guess, pizza?
     public static final String MODID = "sabledyncats";
     public static final Logger LOGGER = LogUtils.getLogger();
 
@@ -77,5 +75,4 @@ public class SableDynoCats {
                 BlockMassPropertiesHandler.BlockReloadListener.INSTANCE
         );
     }
-    // Remember, I never said that I'm a good developer...
 }

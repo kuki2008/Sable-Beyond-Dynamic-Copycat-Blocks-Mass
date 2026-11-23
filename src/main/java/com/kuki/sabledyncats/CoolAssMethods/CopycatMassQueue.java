@@ -2,6 +2,7 @@ package com.kuki.sabledyncats.CoolAssMethods;
 
 import com.copycatsplus.copycats.foundation.copycat.ICopycatBlockEntity;
 import com.copycatsplus.copycats.foundation.copycat.multistate.IMultiStateCopycatBlockEntity;
+import com.simibubi.create.content.decoration.copycat.CopycatBlockEntity;
 import com.kuki.sabledyncats.SableDynoCats;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -13,6 +14,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
@@ -52,16 +54,47 @@ public final class CopycatMassQueue {
     private static ManualScan manualScan;
     private static String lastManualSummary = "No manual mass reconciliation has been run";
 
+
     private CopycatMassQueue() { }
 
     public static void schedule(BlockEntity be) {
         if (be == null || be.isRemoved()
-                || !CopycatsBlockFilter.isCopycatsPlusBlock(be.getBlockState())) {
+                || !CopycatsBlockFilter.isSupportedCopycatBlock(be.getBlockState())) {
             return;
         }
+        boolean isCreate = CopycatsBlockFilter.isCreateCopycatBlock(be.getBlockState());
         Level level = be.getLevel();
         if (level instanceof ServerLevel serverLevel) {
             schedule(serverLevel, be.getBlockPos());
+        } else if (level != null && !level.isClientSide() && isCreate
+                && be instanceof CopycatBlockEntity createBe) {
+            // Some Sable integrations expose a server-side Level without
+            // inheriting ServerLevel. Do not silently lose material changes:
+            // DynamicMass itself accepts Level, so update this rare case now.
+            CopycatMassUpdater.tryUpdate(be, createBe.getMaterial());
+        }
+    }
+
+    /**
+     * Create's *block interaction* supplies the authoritative Level and
+     * position independently of the BlockEntity's potentially transient
+     * level reference. This path is intentionally specific to Create's
+     * panel/step; the old Copycats+ path is unchanged.
+     */
+    public static void scheduleCreateInteraction(Level level, BlockPos pos) {
+        if (level == null || level.isClientSide() || pos == null) {
+            return;
+        }
+        if (level instanceof ServerLevel serverLevel) {
+            // The setMaterial hook may also have queued this position; the
+            // existing HashSet coalesces both into one physics update.
+            schedule(serverLevel, pos);
+        } else {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof CopycatBlockEntity createBe
+                    && CopycatsBlockFilter.isCreateCopycatBlock(be.getBlockState())) {
+                CopycatMassUpdater.tryUpdate(be, createBe.getMaterial());
+            }
         }
     }
 
@@ -110,7 +143,7 @@ public final class CopycatMassQueue {
         return "Recalculating loaded Sable ships: " + manualScan.shipCount
                 + " ships, " + manualScan.chunksVisited + " chunks scanned, "
                 + manualScan.positionsVisited + " BlockEntities examined, "
-                + manualScan.copycatsQueued + " Copycats+ queued; "
+                + manualScan.copycatsQueued + " copycats queued; "
                 + pendingCount() + " pending mass updates, " + activeRetries + " deferred retries";
     }
 
@@ -134,7 +167,7 @@ public final class CopycatMassQueue {
                 lastManualSummary = "Mass reconciliation complete: " + manualScan.shipCount
                         + " loaded ships, " + manualScan.chunksVisited + " plot chunks, "
                         + manualScan.positionsVisited + " BlockEntities checked, "
-                        + manualScan.copycatsQueued + " Copycats+ inspected";
+                        + manualScan.copycatsQueued + " copycats inspected";
                 SableDynoCats.LOGGER.info(lastManualSummary);
                 manualScan = null;
             }
@@ -175,12 +208,18 @@ public final class CopycatMassQueue {
             return CopycatMassUpdater.UpdateResult.OK;
         }
         BlockEntity be = level.getBlockEntity(pos);
-        if (be == null || be.isRemoved()
-                || !CopycatsBlockFilter.isCopycatsPlusBlock(be.getBlockState())) {
+        if (be == null || be.isRemoved()) {
+            return CopycatMassUpdater.UpdateResult.OK;
+        }
+        BlockState state = be.getBlockState();
+        if (!CopycatsBlockFilter.isSupportedCopycatBlock(state)) {
             return CopycatMassUpdater.UpdateResult.OK;
         }
         if (be instanceof IMultiStateCopycatBlockEntity) {
             return CopycatMassUpdater.tryUpdate(be, null);
+        }
+        if (be instanceof CopycatBlockEntity createCopycat) {
+            return CopycatMassUpdater.tryUpdate(be, createCopycat.getMaterial());
         }
         if (be instanceof ICopycatBlockEntity copycat) {
             return CopycatMassUpdater.tryUpdate(be, copycat.getMaterial());
@@ -286,7 +325,7 @@ public final class CopycatMassQueue {
             BlockPos pos = plot.positions.next();
             positionsLeft--;
             scan.positionsVisited++;
-            if (CopycatsBlockFilter.isCopycatsPlusBlock(plot.chunk.getBlockState(pos))) {
+            if (CopycatsBlockFilter.isSupportedCopycatBlock(plot.chunk.getBlockState(pos))) {
                 // HashSet de-duplicates against normal material/Photomancy events.
                 schedule(plot.subLevel.getLevel(), pos);
                 scan.copycatsQueued++;

@@ -4,6 +4,8 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "CCCopycatBlockEntityMixin",
+    "CreateCopycatBlockEntityMixin",
+    "CreateCopycatInteractionMixin",
     "ICopycatBlockEntityMixin",
     "IMultiStateCopycatBlockEntityMixin"
   ],

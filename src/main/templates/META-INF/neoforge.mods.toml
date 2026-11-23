@@ -46,7 +46,7 @@ authors="Kuki2008"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-Adds mass support for Copycats+ blocks in Sable, including multi-material copycats with configurable mass calculation.
+Adds dynamic mass support for Copycats+ and the base Create Copycat Panel and Copycat Step in Sable, including configurable mass calculations.
 '''
 
 # The [[mixin]] block allows you to declare your mixin config to FML so that it gets loaded.

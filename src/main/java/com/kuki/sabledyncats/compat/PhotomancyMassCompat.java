@@ -44,7 +44,7 @@ public final class PhotomancyMassCompat implements SableBlueprintEvent {
             // An entity may have no serialized payload or may not yet be
             // attached here; filtering solely by loaded BlockEntity would
             // silently drop such Copycats. BlockState is always available.
-            if (CopycatsBlockFilter.isCopycatsPlusBlock(placed.state())) {
+            if (CopycatsBlockFilter.isSupportedCopycatBlock(placed.state())) {
                 CopycatMassQueue.schedule(placed.placedSubLevel().getLevel(), placed.storagePos());
             }
         }

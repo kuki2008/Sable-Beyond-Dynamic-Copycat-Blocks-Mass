@@ -1,6 +1,7 @@
 package com.kuki.sabledyncats.CoolAssMethods;
 
 import com.copycatsplus.copycats.foundation.copycat.multistate.IMultiStateCopycatBlockEntity;
+import com.simibubi.create.content.decoration.copycat.CopycatBlockEntity;
 import com.kuki.sabledyncats.Config;
 import com.kuki.sabledyncats.SableDynoCats;
 import com.kuki.sabledyncats.massMultipliers.BlockMassPropertiesHandler;
@@ -27,8 +28,9 @@ import java.util.OptionalDouble;
  * existing vehicle designs rely on its effective masses. Photomancy restores
  * Copycat NBT before calling this calculation through CopycatMassQueue.
  *
- * Only host blocks owned by Copycats+ are updated. The material itself can
- * come from any mod; original Create Copycats are never mass-modified here.
+ * Copycats+ retains its original effective per-material-entry algorithm.
+ * Native Create copycats use fixed shape-based mass factors, so
+ * enabling them cannot alter existing Copycats+ vehicle masses.
  */
 public final class CopycatMassUpdater {
     private static final String COPYCATS_NAMESPACE = "copycats";
@@ -77,7 +79,7 @@ public final class CopycatMassUpdater {
             return;
         }
         BlockState state = be.getBlockState();
-        if (!CopycatsBlockFilter.isCopycatsPlusBlock(state)) {
+        if (!CopycatsBlockFilter.isSupportedCopycatBlock(state)) {
             return;
         }
 
@@ -90,13 +92,31 @@ public final class CopycatMassUpdater {
         // this effective legacy behavior even if new JSON files are present.
         // copycat_slab used multiplier=1.0 in 2.0.0; its JSON has been updated
         // to that valid default, and remains customizable through datapacks.
-        boolean oldFallback = isLegacyFallbackType(blockId);
+        boolean createCopycat = CopycatsBlockFilter.isCreateCopycatBlock(state);
+        boolean oldFallback = !createCopycat && isLegacyFallbackType(blockId);
         double multiplier = Config.enableMassMultipliers && !oldFallback
                 ? provider.massMultiplier(level, state, pos, true)
                 : 1.0;
 
         double totalMass = 0.0;
-        if (!oldFallback && provider instanceof CopycatElementCounter counter) {
+        if (createCopycat) {
+            // Native Create step and panel have a single material and fixed
+            // effective geometry. Their physical mass is REPLACED by the
+            // material fraction, never added on top of the frame mass.
+            // Copycats+ formulas and includeCopycatMass remain untouched.
+            if (!(be instanceof CopycatBlockEntity createBe)) {
+                return;
+            }
+            BlockState copied = createBe.getMaterial();
+            if (!isFilled(copied)) {
+                // An empty Create copycat is the original frame again. A
+                // zero-mass override would incorrectly remove its mass;
+                // clearing the previous override restores Sable's default.
+                clearCreateOverride(level, pos);
+                return;
+            }
+            totalMass = getMass(copied) * getCreateCopycatVolume(blockId) * multiplier;
+        } else if (!oldFallback && provider instanceof CopycatElementCounter counter) {
             int remaining = Math.max(0, counter.getElementCount(level, state, pos));
             if (be instanceof IMultiStateCopycatBlockEntity multiBe
                     && multiBe.getMaterialItemStorage() != null) {
@@ -138,10 +158,19 @@ public final class CopycatMassUpdater {
         }
 
         if (Double.isFinite(totalMass) && totalMass >= 0.0) {
-            // setBlockMass() replaces the absolute override, NOT an additive
-            // modifier. Ignore duplicate callbacks (chunk load, onLoad,
-            // material changes, Photomancy) before touching the physics body.
+            // setBlockMass() replaces an absolute override by applying only
+            // the difference to the Sable physics tracker. Compare against
+            // the stored value so duplicate callbacks remain side-effect free.
             OptionalDouble previous = DynamicMass.getBlockMass(level, pos);
+            if (createCopycat && Double.compare(
+                    DynamicMass.getDefaultBlockMass(level, pos, state), totalMass) == 0) {
+                // Avoid storing a redundant override for an ordinary mass.
+                // This is important for reloads and future config changes.
+                if (previous.isPresent()) {
+                    DynamicMass.clearBlockMass(level, pos);
+                }
+                return;
+            }
             if (previous.isEmpty() || Double.compare(previous.getAsDouble(), totalMass) != 0) {
                 // CELKA 0.4.0.test2 wraps this invocation in the legacy
                 // void update(...) method. Keep the invocation here, not in
@@ -154,6 +183,18 @@ public final class CopycatMassUpdater {
                     totalMass, blockId, pos);
         }
         return;
+    }
+
+    private static void clearCreateOverride(Level level, BlockPos pos) {
+        if (DynamicMass.getBlockMass(level, pos).isPresent()) {
+            DynamicMass.clearBlockMass(level, pos);
+        }
+    }
+
+    private static double getCreateCopycatVolume(ResourceLocation blockId) {
+        // Fixed effective mass fractions, not runtime voxel measurements.
+        // No allocations or world queries on material-change events.
+        return "copycat_panel".equals(blockId.getPath()) ? 0.5 : 0.25;
     }
 
     private static BlockState resolveSimpleMaterial(BlockEntity be, BlockState material) {
